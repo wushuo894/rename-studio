@@ -10,8 +10,6 @@ jobs:
   prepare:
     name: Read application version
     runs-on: ubuntu-22.04
-    outputs:
-      version: ${{ steps.version.outputs.version }}
     steps:
       - name: Checkout source
         uses: actions/checkout@v6
