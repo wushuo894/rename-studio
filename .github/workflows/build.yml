@@ -10,6 +10,9 @@ jobs:
   prepare:
     name: Read application version
     runs-on: ubuntu-22.04
+    # 通过 job output 将版本传给独立 runner 上的发布任务。
+    outputs:
+      version: ${{ steps.version.outputs.version }}
     steps:
       - name: Checkout source
         uses: actions/checkout@v6
@@ -19,7 +22,7 @@ jobs:
         shell: bash
         run: |
           version="$(jq -r .version src-tauri/tauri.conf.json)"
-          echo "version=v$version" >> $GITHUB_ENV
+          echo "version=v$version" >> "$GITHUB_OUTPUT"
 
   build:
     name: Build ${{ matrix.name }}
@@ -96,9 +99,9 @@ jobs:
       - name: Publish GitHub release
         uses: softprops/action-gh-release@v3
         with:
-          name: ${{ env.version }}
+          name: ${{ needs.prepare.outputs.version }}
           body_path: UPDATE.md
-          tag_name: ${{ env.version }}
+          tag_name: ${{ needs.prepare.outputs.version }}
           append_body: false
           token: ${{ secrets.GITHUB_TOKEN }}
           files: |
