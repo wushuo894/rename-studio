@@ -116,6 +116,9 @@ jobs:
           TAG_NAME: v${{ needs.prepare.outputs.version }}
         run: |
           mapfile -t packages < <(find artifacts -type f)
-          gh release create "$TAG_NAME" "${packages[@]}" \
-            --title "Rename Studio $TAG_NAME" \
-            --generate-notes
+          if ! gh release view "$TAG_NAME" >/dev/null 2>&1; then
+            gh release create "$TAG_NAME" \
+              --title "Rename Studio $TAG_NAME" \
+              --generate-notes
+          fi
+          gh release upload "$TAG_NAME" "${packages[@]}" --clobber
