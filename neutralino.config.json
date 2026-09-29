@@ -1,0 +1,59 @@
+{
+  "$schema": "https://raw.githubusercontent.com/neutralinojs/neutralinojs/main/schemas/neutralino.config.schema.json",
+  "applicationId": "io.github.renamestudio.desktop",
+  "applicationName": "Rename Studio",
+  "applicationIcon": "public/icon.png",
+  "version": "0.1.0",
+  "description": "本地批量重命名桌面工具",
+  "defaultMode": "window",
+  "port": 0,
+  "documentRoot": "/web-dist/",
+  "url": "/",
+  "enableServer": true,
+  "enableNativeAPI": true,
+  "tokenSecurity": "one-time",
+  "dataLocation": "system",
+  "storageLocation": "system",
+  "nativeAllowList": [
+    "app.exit",
+    "filesystem.getStats",
+    "filesystem.move",
+    "filesystem.readDirectory",
+    "os.showFolderDialog",
+    "os.showMessageBox",
+    "os.showOpenDialog",
+    "window.setMainMenu"
+  ],
+  "modes": {
+    "window": {
+      "title": "Rename Studio",
+      "width": 1080,
+      "height": 760,
+      "minWidth": 720,
+      "minHeight": 580,
+      "center": true,
+      "icon": "/web-dist/icon.png",
+      "enableInspector": false,
+      "resizable": true,
+      "exitProcessOnClose": false,
+      "useSavedState": true,
+      "injectGlobals": true,
+      "emitDropEvents": true
+    }
+  },
+  "cli": {
+    "binaryName": "rename-studio",
+    "resourcesPath": "/web-dist/",
+    "extensionsPath": "/extensions/",
+    "binaryVersion": "6.9.0",
+    "clientVersion": "6.9.0",
+    "distributionPath": "/release/",
+    "frontendLibrary": {
+      "patchFile": "/index.html",
+      "devUrl": "http://127.0.0.1:1420",
+      "projectPath": "/",
+      "devCommand": "pnpm dev",
+      "buildCommand": "pnpm build"
+    }
+  }
+}

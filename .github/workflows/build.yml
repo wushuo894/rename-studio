@@ -1,0 +1,100 @@
+name: Build desktop packages
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  prepare:
+    name: Read application version
+    runs-on: ubuntu-22.04
+    # 通过 job output 将版本传给独立 runner 上的发布任务。
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v6
+
+      - name: Read version from Neutralino configuration
+        id: version
+        shell: bash
+        run: |
+          version="$(jq -r .version neutralino.config.json)"
+          echo "version=v$version" >> "$GITHUB_OUTPUT"
+
+  build:
+    name: Build cross-platform release assets
+    needs: prepare
+    runs-on: macos-14
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v6
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          version: 12
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run JavaScript rule tests
+        run: pnpm test
+
+      - name: Download Neutralino framework binaries
+        run: pnpm neutralino:update
+
+      - name: Build Neutralino desktop binaries
+        run: pnpm desktop:build
+
+      - name: Collect Linux and Windows binaries
+        # Linux 与 Windows 只发布资源内嵌的 x64 可执行文件，不生成安装包。
+        run: pnpm package:binaries
+
+      - name: Package macOS DMG
+        # macOS 仅封装并发布 Apple Silicon DMG，不提供 Intel Mac 产物。
+        run: pnpm package:macos
+
+      - name: Upload build packages
+        uses: actions/upload-artifact@v7
+        with:
+          name: rename-studio-release-assets
+          path: release/publish/*
+          if-no-files-found: error
+
+  release:
+    name: Publish release
+    needs:
+      - prepare
+      - build
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v6
+
+      - name: Download build packages
+        uses: actions/download-artifact@v8
+        with:
+          name: rename-studio-release-assets
+          path: artifacts
+
+      - name: Publish GitHub release
+        uses: softprops/action-gh-release@v3
+        with:
+          name: ${{ needs.prepare.outputs.version }}
+          body_path: UPDATE.md
+          tag_name: ${{ needs.prepare.outputs.version }}
+          append_body: false
+          token: ${{ secrets.GITHUB_TOKEN }}
+          files: |
+            artifacts/*
+          fail_on_unmatched_files: true
