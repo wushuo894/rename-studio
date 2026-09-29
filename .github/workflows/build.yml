@@ -10,8 +10,29 @@ permissions:
   contents: write
 
 jobs:
+  prepare:
+    name: Read application version
+    runs-on: ubuntu-22.04
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Read version from Tauri configuration
+        id: version
+        shell: bash
+        run: |
+          version="$(node -p "JSON.parse(require('fs').readFileSync('src-tauri/tauri.conf.json', 'utf8')).version")"
+          if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+([.-][0-9A-Za-z.-]+)?$ ]]; then
+            echo "Invalid application version: $version" >&2
+            exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
   build:
     name: Build ${{ matrix.name }}
+    needs: prepare
     strategy:
       fail-fast: false
       matrix:
@@ -77,8 +98,9 @@ jobs:
 
   release:
     name: Publish release
-    if: startsWith(github.ref, 'refs/tags/v')
-    needs: build
+    needs:
+      - prepare
+      - build
     runs-on: ubuntu-22.04
     permissions:
       contents: write
@@ -91,7 +113,7 @@ jobs:
       - name: Publish GitHub release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAG_NAME: ${{ github.ref_name }}
+          TAG_NAME: v${{ needs.prepare.outputs.version }}
         run: |
           mapfile -t packages < <(find artifacts -type f)
           gh release create "$TAG_NAME" "${packages[@]}" \

@@ -86,7 +86,7 @@ Tauri 支持为不同目标编译，但 macOS 和 Windows 的原生打包依赖�
 
 有两种触发方式：
 
-1. 在 GitHub 仓库的 Actions 页面手动运行 `Build desktop packages`。
+1. 在 GitHub 仓库的 Actions 页面手动运行 `Build desktop packages`，构建成功后自动发布 Release。
 2. 推送版本标签自动构建并发布 Release，例如：
 
 ```bash
@@ -94,7 +94,7 @@ git tag v0.1.0
 git push origin v0.1.0
 ```
 
-工作流会运行测试；版本标签构建成功后自动创建 GitHub Release，并将三个平台的安装包作为附件发布。macOS 仅构建 Apple Silicon 版本，不提供 Intel 版本。当前 macOS 配置使用 ad-hoc 签名，适合测试分发；正式公开发布时应配置 Apple Developer 证书与公证凭据。
+工作流会运行测试，并始终从 `src-tauri/tauri.conf.json` 的 `version` 字段读取版本号，以 `v<version>` 创建或更新 GitHub Release；触发工作流时填写的分支或标签不会改变发布版本。三个平台的安装包会作为附件发布。macOS 仅构建 Apple Silicon 版本，不提供 Intel 版本。当前 macOS 配置使用 ad-hoc 签名，适合测试分发；正式公开发布时应配置 Apple Developer 证书与公证凭据。
 
 ## 自定义 JavaScript
 
