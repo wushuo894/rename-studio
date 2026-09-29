@@ -8,7 +8,7 @@
 - 第一优先平台是 macOS Apple Silicon。
 - 第二优先平台是 Linux x64。
 - 不需要构建或适配 Intel Mac。
-- Windows 暂不属于当前版本范围，除非用户后续明确要求。
+- Windows x64 已纳入当前版本范围；不需要构建 ARM Windows 版本。
 
 ## 固定技术栈
 
@@ -74,7 +74,7 @@
 ## GitHub Actions 要求
 
 - 工作流位于 `.github/workflows/build.yml`。
-- 保留 macOS Apple Silicon 和 Linux x64 构建。
+- 保留 macOS Apple Silicon、Linux x64 和 Windows x64 构建。
 - 不添加 Intel Mac 构建。
 - 构建前运行 JavaScript 规则测试。
 - 使用项目锁文件安装依赖。

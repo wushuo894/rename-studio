@@ -1,6 +1,6 @@
 # Rename Studio
 
-Rename Studio 是一个优先适配 macOS 和 Linux 的批量重命名桌面工具。界面使用 Vue 3 与 Vuetify，重命名规则和任务编排使用 JavaScript，Tauri 2 提供原生文件选择、文件系统访问和安装包构建能力。
+Rename Studio 是一个支持 macOS、Linux 和 Windows 的批量重命名桌面工具。界面使用 Vue 3 与 Vuetify，重命名规则和任务编排使用 JavaScript，Tauri 2 提供原生文件选择、文件系统访问和安装包构建能力。
 
 项目开发规划见 [`docs/PROJECT_PLAN.md`](docs/PROJECT_PLAN.md)。AI 编码代理接手项目前必须阅读 [`AGENTS.md`](AGENTS.md)。
 
@@ -72,7 +72,7 @@ pnpm test
 pnpm tauri build
 ```
 
-输出位于 `src-tauri/target/release/bundle/`。macOS 可以生成 `.app` 和 `.dmg`，Linux 可以生成 AppImage、deb 等 Tauri 支持的格式。
+输出位于 `src-tauri/target/release/bundle/`。macOS 可以生成 `.app` 和 `.dmg`，Linux 可以生成 AppImage、deb，Windows 可以生成 `.msi` 和 `.exe` 等 Tauri 支持的格式。
 
 ## GitHub Actions 编译
 
@@ -80,18 +80,21 @@ pnpm tauri build
 
 - macOS Apple Silicon（`aarch64-apple-darwin`）
 - Linux x64
+- Windows x64（`x86_64-pc-windows-msvc`）
+
+Tauri 支持为不同目标编译，但 macOS 和 Windows 的原生打包依赖对应系统 runner，因此工作流分别使用 macOS、Linux 和 Windows runner。macOS Apple Silicon runner 不是为了交叉编译 Linux 或 Windows，而是为了生成 Apple Silicon 原生安装包。
 
 有两种触发方式：
 
 1. 在 GitHub 仓库的 Actions 页面手动运行 `Build desktop packages`。
-2. 推送版本标签，例如：
+2. 推送版本标签自动构建并发布 Release，例如：
 
 ```bash
 git tag v0.1.0
 git push origin v0.1.0
 ```
 
-工作流会运行测试并创建草稿 Release，编译结果放在 Release 的附件中。macOS 仅构建 Apple Silicon 版本，不提供 Intel 版本。当前 macOS 配置使用 ad-hoc 签名，适合测试分发；正式公开发布时应配置 Apple Developer 证书与公证凭据。
+工作流会运行测试；版本标签构建成功后自动创建 GitHub Release，并将三个平台的安装包作为附件发布。macOS 仅构建 Apple Silicon 版本，不提供 Intel 版本。当前 macOS 配置使用 ad-hoc 签名，适合测试分发；正式公开发布时应配置 Apple Developer 证书与公证凭据。
 
 ## 自定义 JavaScript
 
