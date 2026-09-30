@@ -5,8 +5,11 @@
       <stop offset="1" stop-color="#2366D1"/>
     </linearGradient>
   </defs>
-  <rect width="1024" height="1024" rx="220" fill="url(#background)"/>
-  <path d="M266 296h492c45 0 82 37 82 82v268c0 45-37 82-82 82H266c-45 0-82-37-82-82V378c0-45 37-82 82-82Z" fill="#151A20" opacity=".92"/>
-  <path d="M302 433h270M302 590h420" fill="none" stroke="#F3F7FC" stroke-linecap="round" stroke-width="66"/>
-  <path d="m655 369 105 105-105 105" fill="none" stroke="#58A6FF" stroke-linecap="round" stroke-linejoin="round" stroke-width="56"/>
+  <!-- macOS Dock 会把运行中应用图标放大显示，透明安全边距可避免视觉上比系统图标大一圈。 -->
+  <g transform="translate(96 96) scale(0.8125)">
+    <rect width="1024" height="1024" rx="220" fill="url(#background)"/>
+    <path d="M266 296h492c45 0 82 37 82 82v268c0 45-37 82-82 82H266c-45 0-82-37-82-82V378c0-45 37-82 82-82Z" fill="#151A20" opacity=".92"/>
+    <path d="M302 433h270M302 590h420" fill="none" stroke="#F3F7FC" stroke-linecap="round" stroke-width="66"/>
+    <path d="m655 369 105 105-105 105" fill="none" stroke="#58A6FF" stroke-linecap="round" stroke-linejoin="round" stroke-width="56"/>
+  </g>
 </svg>
