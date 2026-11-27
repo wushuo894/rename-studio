@@ -4,6 +4,20 @@ Rename Studio 是一个支持 macOS、Linux 和 Windows 的本地批量重命名
 
 界面采用深色工作区：顶部导入文件与撤销操作，中间配置规则并实时预览，下方文件列表独立滚动，底部显示待执行数量和重命名按钮。只有 macOS 使用沉浸式标题栏，保留原生窗口按钮和拖动区域；Linux、Windows 使用系统原生窗口。项目规划见 [PROJECT_PLAN.md](docs/PROJECT_PLAN.md)，开发规范见 [AGENTS.md](AGENTS.md)。
 
+## 使用 Homebrew 安装
+
+适用于搭载 Apple Silicon 的 Mac，要求 macOS 12 或更高版本。安装命令如下。
+
+```sh
+brew install --cask wushuo894/tap/rename-studio
+```
+
+通过 Homebrew 升级时运行以下命令。
+
+```sh
+brew upgrade --cask wushuo894/tap/rename-studio
+```
+
 ## 当前功能
 
 - 查找替换支持多条规则、正则表达式、大小写匹配和扩展名处理。
