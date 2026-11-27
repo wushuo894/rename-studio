@@ -2,7 +2,7 @@
   "name": "rename-studio",
   "slug": "rename-studio",
   "identifier": "io.github.renamestudio.mygo",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "icon": "resources/icon.png",
   "devUrl": "http://127.0.0.1:5173",
   "devCommand": "pnpm --config.verify-deps-before-run=false run dev:web",
@@ -12,6 +12,7 @@
   "out": "build",
   "updates": {
     "publicKey": "8zoTsfKo37YDTK3GR0wu3GKfnMw6aoPYfuOArfbEVxQ=",
-    "github": "wushuo894/rename-studio"
+    "github": "wushuo894/rename-studio",
+    "deltas": 0
   }
 }

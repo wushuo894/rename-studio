@@ -18,6 +18,33 @@ brew install --cask wushuo894/tap/rename-studio
 brew upgrade --cask wushuo894/tap/rename-studio
 ```
 
+## 使用安装脚本
+
+脚本会从 GitHub 下载并安装最新正式版。也可以从发行页下载脚本，查看内容后再运行。[GitHub Releases](https://github.com/wushuo894/rename-studio/releases/latest)
+
+### macOS Apple Silicon 和 Linux x64
+
+在终端下载并运行 `install.sh`。[下载 install.sh](https://github.com/wushuo894/rename-studio/releases/latest/download/install.sh)
+
+```sh
+curl -fsSL https://github.com/wushuo894/rename-studio/releases/latest/download/install.sh | sh
+```
+
+- macOS 默认安装到 `/Applications`。该目录不可写时，脚本安装到 `~/Applications`。
+- Linux 安装到 `~/.local/rename-studio.app`，安装后可从系统应用菜单打开。在线安装需要 OpenSSL 3.0 或更新版本来验证签名，运行应用需要 GTK 3 和 WebKitGTK 4.1。
+
+再次运行 `sh install.sh` 可升级。运行 `sh install.sh --uninstall` 可卸载应用并保留设置和数据。
+
+### Windows x64
+
+在 Windows PowerShell 5.1 或 PowerShell 7 中运行。[下载 install.ps1](https://github.com/wushuo894/rename-studio/releases/latest/download/install.ps1)
+
+```powershell
+irm https://github.com/wushuo894/rename-studio/releases/latest/download/install.ps1 | iex
+```
+
+脚本校验安装程序的 SHA-256，以当前用户身份静默安装并打开应用。默认安装到 `%LOCALAPPDATA%\Programs\rename-studio`，已有安装会沿用原目录。再次运行可升级，卸载可在 Windows 的「设置 → 应用」中完成。
+
 ## 当前功能
 
 - 查找替换支持多条规则、正则表达式、大小写匹配和扩展名处理。
@@ -48,10 +75,10 @@ go tool mygo build -platform linux/amd64,windows/amd64,darwin/arm64
 `pnpm build` / `pnpm desktop:build` 和 `pnpm desktop:package` 分别对应上述两种构建方式；`pnpm build:web` 仅构建 `dist/` 前端资源。
 Go 模块、入口和文件服务统一位于根目录，`mygo.json` 是应用版本、图标、开发和构建命令、更新源的统一配置。
 前端业务继续使用 JavaScript，CLI 的绑定描述生成在忽略的 `.mygo/` 目录，现有桥接仍统一通过 `src/services/fileSystem.js`。
-`pnpm test` 运行规则测试；根目录执行 `go test ./...` 运行文件操作测试，无需先构建前端。
+`pnpm test` 使用 Node.js 内置测试运行器测试重命名规则、脚本补全和脚本 Worker。`go test ./...` 运行文件操作测试，无需先构建前端。
 
 GitHub Actions 的 **Build desktop packages** 工作流可手动运行。它使用锁文件安装依赖，在 macOS 上构建 Linux amd64、Windows amd64 和 macOS arm64，
-发布官方安装包、Linux tar.gz、安装脚本、签名更新包、增量包与平台清单。桌面产物位于 `build/`，无需 Bash 自定义打包脚本或 jq 本地打包。
+发布官方安装包、签名更新包、`install.sh`、`install.ps1`、平台清单与 `SHA256SUMS` 校验文件。桌面产物位于 `build/`，无需 Bash 自定义打包脚本或 jq 本地打包。
 macOS 默认 ad-hoc 签名；正式的 Developer ID 签名与公证需要另行配置 `mygo.json` 的 `macos` 选项和 CI Secrets。
 
 ## 桌面端自更新
@@ -64,7 +91,7 @@ macOS 默认 ad-hoc 签名；正式的 Developer ID 签名与公证需要另行�
 请备份该私钥，并将其完整内容保存到 `wushuo894/rename-studio` 仓库的 Actions Secret `MYGO_UPDATER_PRIVATE_KEY`，不要提交到 Git。
 发布时修改 `mygo.json` 的 `version` 和 `UPDATE.md`，再运行工作流；所有更新文件上传完成后才公开 `v版本号`。
 本地生成签名更新包时，也通过 `MYGO_UPDATER_PRIVATE_KEY` 环境变量提供同一私钥。
-开发版、AppImage 和安装目录不可写的应用不能自更新；Linux deb/rpm 由包管理器更新，可自更新版本使用 `install.sh` 或用户可写目录中的 tar.gz。
+开发版、AppImage 和安装目录不可写的应用不能自更新。Linux deb/rpm 由包管理器更新。通过 `install.sh` 安装或将 tar.gz 解压到用户可写目录，即可使用自更新。
 
 ## 自定义 JavaScript
 
