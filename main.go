@@ -85,10 +85,16 @@ func main() {
 	mygo.Bind(desktop)
 
 	mygo.App.WhenReady(func() {
-		win := mygo.NewWindow(mygo.WindowOptions{
+		opts := mygo.WindowOptions{
 			Title: "Rename Studio", URL: "/", Width: 1080, Height: 760,
-			MinWidth: 720, MinHeight: 580, BackgroundColor: "#171a1f",
-		})
+			MinWidth: 720, MinHeight: 580, BackgroundColor: "#11151b",
+		}
+		// 仅 macOS 将页面延伸到标题栏，保留原生红黄绿按钮；其他平台使用系统装饰。
+		if runtime.GOOS == "darwin" {
+			opts.TitleBarStyle = mygo.TitleBarHidden
+			opts.TitleBarHeight = 48
+		}
+		win := mygo.NewWindow(opts)
 		win.OnFileDrop(func(event *mygo.FileDropEvent) {
 			paths := append([]string(nil), event.Paths...)
 			go func() {

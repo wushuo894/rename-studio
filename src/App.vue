@@ -2,10 +2,13 @@
 import {computed, onBeforeUnmount, onMounted, reactive, ref, watch} from 'vue'
 import {
   ArrowDownAZ,
+  ArrowRight,
+  Files,
+  FolderOpen,
+  RefreshCw,
   Braces,
   Hash,
   ListRestart,
-  PencilLine,
   Play,
   Search,
   TextCursorInput,
@@ -33,7 +36,9 @@ import {
 } from './services/fileSystem.js'
 import {applyAutoNumber, applyFindReplace, applyInsert, validateFileName} from './utils/renameRules.js'
 import {runCustomScript} from './utils/scriptRunner.js'
+import {appendScriptLog} from './utils/scriptLogs.js'
 import {splitFileName, splitPath} from './utils/path.js'
+import appIcon from '../resources/icon.png'
 
 /** 检查失败由框架弹窗显示，桥接失败沿用页面提示。 */
 async function openDesktopUpdate() {
@@ -85,6 +90,8 @@ const lastPlan = ref(null)
 const scriptError = ref('')
 const desktop = isDesktopRuntime()
 const platform = desktopPlatform()
+// 页面只在 macOS 为原生标题按钮留白，交互控件仍可点击，空白区域用于拖动。
+const immersiveWindow = desktop && platform === 'darwin'
 const presetBusy = ref(desktop)
 const scriptPresets = ref(desktop ? [] : loadScriptPresets())
 const selectedPreset = ref('')
@@ -172,7 +179,7 @@ async function persistScriptPresets(next) {
 }
 
 /** 新增生成独立 ID，编辑只更新指定的记录。同名时提示用户修改名称。 */
-async function saveScriptPreset({id, name: draftName, script}) {
+async function saveScriptPreset({id, name: draftName, script, activate = true}) {
   const name = draftName?.trim()
   if (!name) return {error: '请先填写脚本名称'}
   if (!script.trim()) return {error: '请先填写脚本代码'}
@@ -185,7 +192,8 @@ async function saveScriptPreset({id, name: draftName, script}) {
   const next = [...scriptPresets.value.filter((item) => item.id !== preset.id), preset]
     .sort((a, b) => a.name.localeCompare(b.name, 'zh-CN'))
   if (!await persistScriptPresets(next)) return {error: '无法保存脚本，请重试'}
-  selectedPreset.value = preset.id
+  // 仅改名称时维持当前选择，保存编辑内容时才应用脚本。
+  if (activate) selectedPreset.value = preset.id
   notify(`已保存脚本“${name}”`, 'success')
   return {id: preset.id}
 }
@@ -264,7 +272,7 @@ async function openImport() {
 }
 
 /** 根据当前功能模式计算单个文件的新名称。 */
-async function calculateName(file, index) {
+async function calculateName(file, index, version) {
   if (activeMode.value === 'findReplace') return applyFindReplace(file.originalName, findReplace.value)
   if (activeMode.value === 'insert') {
     const info = {...file, ...imageInfoCache.get(file.id)}
@@ -282,6 +290,11 @@ async function calculateName(file, index) {
     index,
     size: file.size,
     modified: file.modified,
+  }, 10_000, {
+    // 过期预览的线程即使尚未结束，也不能继续污染当前日志。
+    onLog: (entry) => {
+      if (version === previewVersion) appendScriptLog(`预览 · ${file.originalName}`, entry)
+    },
   })
 }
 
@@ -316,7 +329,7 @@ async function refreshPreview() {
   const nextFiles = await Promise.all(items.map(async (file, index) => {
     try {
       if (imageInfoError && !imageInfoCache.has(file.id)) throw imageInfoError
-      const newName = await calculateName(file, index)
+      const newName = await calculateName(file, index, version)
       if (newName === null) {
         return {...file, newName: file.originalName, status: 'skipped', error: '缺少所选文件信息'}
       }
@@ -465,19 +478,20 @@ onBeforeUnmount(() => removeDropListener?.())
 
 <template>
   <v-app>
-    <main class="app-shell">
+    <main class="app-shell" :class="{ 'immersive-window': immersiveWindow }">
       <header class="topbar">
-        <div class="brand-mark">
-          <PencilLine :size="19"/>
-        </div>
+        <img class="brand-mark" :src="appIcon" width="36" height="36" alt=""/>
         <div class="brand-copy">
           <h1>Rename Studio</h1>
-          <span>批量重命名</span>
+          <span>批量重命名工作区</span>
         </div>
         <div class="topbar-actions">
-          <v-btn v-if="desktop" variant="text" size="small" :disabled="busy" @click="openDesktopUpdate">
-            检查更新
-          </v-btn>
+          <v-tooltip v-if="desktop" text="检查桌面端更新">
+            <template #activator="{ props }">
+              <v-btn v-bind="props" class="quiet-action" icon variant="text" size="small" aria-label="检查桌面端更新"
+                     :disabled="busy" @click="openDesktopUpdate"><RefreshCw :size="17"/></v-btn>
+            </template>
+          </v-tooltip>
           <v-tooltip text="撤销最近一次重命名">
             <template #activator="{ props }">
               <v-btn v-bind="props" icon variant="text" :disabled="!lastPlan || busy" @click="undoLastRename">
@@ -485,11 +499,16 @@ onBeforeUnmount(() => removeDropListener?.())
               </v-btn>
             </template>
           </v-tooltip>
+          <span class="toolbar-divider" aria-hidden="true"/>
+          <v-btn class="import-action" color="primary" variant="tonal" :disabled="busy" @click="openImport">
+            <FolderOpen :size="17"/>导入文件
+          </v-btn>
         </div>
       </header>
 
       <section class="workspace">
         <section class="rule-editor" aria-label="重命名操作">
+          <div class="rule-toolbar">
           <nav class="mode-tabs" aria-label="重命名功能">
             <button v-for="mode in modes" :key="mode.value" type="button"
                     :class="{ active: activeMode === mode.value }" :aria-pressed="activeMode === mode.value"
@@ -498,6 +517,8 @@ onBeforeUnmount(() => removeDropListener?.())
               <span>{{ mode.label }}</span>
             </button>
           </nav>
+          <span class="live-preview"><span class="live-dot"/>实时预览</span>
+          </div>
 
           <div class="rule-scroll">
             <FindReplacePanel v-if="activeMode === 'findReplace'" v-model="findReplace"/>
@@ -519,8 +540,9 @@ onBeforeUnmount(() => removeDropListener?.())
         <section class="file-pane">
           <header class="pane-header file-header">
             <div class="file-summary">
-              <h2>重命名预览</h2>
-              <span>{{ files.length }} 个文件 · 已选 {{ selectedFiles.length }} 个</span>
+              <h2><Files :size="17"/>文件预览</h2>
+              <span class="file-count">{{ files.length }} 个文件</span>
+              <span v-if="files.length" class="selected-count">已选 {{ selectedFiles.length }} 个</span>
               <span v-if="hasErrors" class="error-count">存在无效的文件名或规则</span>
             </div>
             <div class="file-tools">
@@ -553,7 +575,7 @@ onBeforeUnmount(() => removeDropListener?.())
                                                   aria-label="选择全部文件" @change="toggleAll($event.target.checked)"/>
                   </th>
                   <th>原文件名</th>
-                  <th>新文件名</th>
+                  <th><span class="preview-column-label"><ArrowRight :size="14"/>新文件名</span></th>
                   <th class="status-column">状态</th>
                   <th class="action-column"></th>
                 </tr>
@@ -579,20 +601,33 @@ onBeforeUnmount(() => removeDropListener?.())
                 </tbody>
               </table>
             </div>
-            <button class="list-import" :class="{ 'empty-state': !files.length }" type="button"
-                    :disabled="busy" @click="openImport">
-              <span v-if="!files.length" class="drop-icon">
-                <Upload :size="28" stroke-width="1.5" aria-hidden="true"/>
-              </span>
-              <span>点击选择文件，或拖放文件或文件夹</span>
-            </button>
+            <!-- 空白区域仅展示拖放提示，文件选择只由明确的按钮触发。 -->
+            <div class="list-import" :class="{ 'empty-state': !files.length }">
+              <template v-if="!files.length">
+                <span class="drop-icon"><FolderOpen :size="29" stroke-width="1.4" aria-hidden="true"/></span>
+                <span class="empty-title">把文件拖到这里</span>
+                <span class="empty-description">添加文件或文件夹，立即查看改名结果</span>
+                <button class="empty-action" type="button" :disabled="busy" @click="openImport">
+                  <Upload :size="15"/>选择文件
+                </button>
+              </template>
+              <template v-else>
+                <button class="add-more" type="button" :disabled="busy" @click="openImport">
+                  <Upload :size="15"/>继续添加文件
+                </button>
+                <span class="drop-hint">或拖放到这里</span>
+              </template>
+            </div>
           </div>
 
           <footer class="operation-bar">
-            <span>{{ previewing ? '正在生成预览…' : `${executableFiles.length} 项待执行` }}</span>
+            <div class="operation-summary">
+              <span class="operation-count">{{ executableFiles.length }}</span>
+              <div><strong>个文件待执行</strong><span>{{ previewing ? '正在生成预览…' : hasErrors ? '请先处理无效的文件名或规则' : '执行前会确认改名与覆盖操作' }}</span></div>
+            </div>
             <v-btn color="primary" variant="flat" :loading="busy" :disabled="!canRename" @click="runRename">
-              <Play :size="17" fill="currentColor"/>
-              执行重命名
+              <Play :size="16" fill="currentColor"/>
+              执行重命名<ArrowRight :size="16"/>
             </v-btn>
           </footer>
         </section>

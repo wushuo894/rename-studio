@@ -1,5 +1,5 @@
 <script setup>
-import { Plus, Trash2 } from '@lucide/vue'
+import { ArrowRight, Plus, Trash2 } from '@lucide/vue'
 
 defineProps({ modelValue: { type: Object, required: true } })
 const emit = defineEmits(['update:modelValue'])
@@ -10,6 +10,7 @@ function updateRule(config, index, field, value) {
   emit('update:modelValue', { ...config, rules })
 }
 
+/** 添加规则后仍按原顺序参与实时预览。 */
 function addRule(config) {
   emit('update:modelValue', {
     ...config,
@@ -17,6 +18,7 @@ function addRule(config) {
   })
 }
 
+/** 至少保留一条规则，界面按钮负责阻止删除最后一条。 */
 function removeRule(config, index) {
   emit('update:modelValue', { ...config, rules: config.rules.filter((_, ruleIndex) => ruleIndex !== index) })
 }
@@ -41,6 +43,7 @@ function removeRule(config, index) {
             @update:model-value="updateRule(modelValue, index, 'find', $event)"
           />
         </label>
+        <ArrowRight class="field-arrow" :size="18" aria-hidden="true"/>
         <label class="field-block">
           <span>替换内容</span>
           <v-text-field

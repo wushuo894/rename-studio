@@ -2,7 +2,6 @@ package main
 
 import (
 	"errors"
-	"fmt"
 	"os"
 	"syscall"
 
@@ -15,23 +14,14 @@ func moveReplace(dir *os.File, from, to string) error {
 	return unix.Renameat(fd, from, fd, to)
 }
 
-// 优先原子重命名，只在已知不支持该操作的卷上尝试独占复制。
+// moveNoReplace 仅执行系统原子改名，不复制内容；不支持时保留源文件并明确报错。
 func moveNoReplace(dir *os.File, from, to string, expected os.FileInfo) (os.FileInfo, error) {
 	fd := int(dir.Fd())
 	err := unix.RenameatxNp(fd, from, fd, to, unix.RENAME_EXCL)
-	if !errors.Is(err, unix.ENOTSUP) {
-		return expected, err
+	if errors.Is(err, unix.ENOTSUP) {
+		return nil, errors.Join(errors.New("此文件系统不支持禁止覆盖的原子改名，未执行复制移动"), err)
 	}
-	var volume unix.Statfs_t
-	if statErr := unix.Fstatfs(fd, &volume); statErr != nil {
-		return nil, errors.Join(err, statErr)
-	}
-	switch fsType := unix.ByteSliceToString(volume.Fstypename[:]); fsType {
-	case "smbfs", "exfat", "msdos":
-		return copyMoveNoReplace(dir, from, to, expected)
-	default:
-		return nil, fmt.Errorf("挂载卷类型 %s 不支持禁止覆盖的重命名：%w", fsType, err)
-	}
+	return expected, err
 }
 
 // macOS 的文件状态包含真实创建时间。
