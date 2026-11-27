@@ -92,7 +92,8 @@ func main() {
 		// 仅 macOS 将页面延伸到标题栏，保留原生红黄绿按钮；其他平台使用系统装饰。
 		if runtime.GOOS == "darwin" {
 			opts.TitleBarStyle = mygo.TitleBarHidden
-			opts.TitleBarHeight = 48
+			// 原生按钮距窗口左边和顶部各 16 点，工具栏按按钮底边向下排布。
+			opts.TrafficLightPosition = &mygo.Point{X: 16, Y: 16}
 		}
 		win := mygo.NewWindow(opts)
 		win.OnFileDrop(func(event *mygo.FileDropEvent) {
