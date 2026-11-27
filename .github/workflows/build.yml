@@ -1,0 +1,66 @@
+name: Build desktop packages
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      # 缺少签名私钥时提前结束，避免发布客户端无法安装的更新。
+      - name: Prepare signed update
+        env:
+          MYGO_UPDATER_PRIVATE_KEY: ${{ secrets.MYGO_UPDATER_PRIVATE_KEY }}
+        run: |
+          if [ -z "$MYGO_UPDATER_PRIVATE_KEY" ]; then
+            echo "::error::请在仓库 Secrets 中配置 MYGO_UPDATER_PRIVATE_KEY"
+            exit 1
+          fi
+          version=$(jq -er '.version' mygo.json)
+          echo "version=v$version" >> "$GITHUB_ENV"
+          # 更新弹窗读取版本章节，继续沿用 UPDATE.md 作为发行说明来源。
+          printf '## %s\n\n' "$version" > CHANGELOG.md
+          cat UPDATE.md >> CHANGELOG.md
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+          cache-dependency-path: go.sum
+      - uses: pnpm/action-setup@v6
+        with:
+          version: 12.23.0
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '26'
+          cache: pnpm
+      - name: Install frontend dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Build desktop packages
+        env:
+          MYGO_UPDATER_PRIVATE_KEY: ${{ secrets.MYGO_UPDATER_PRIVATE_KEY }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: go tool mygo build -platform linux/amd64,windows/amd64,darwin/arm64
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v3
+        with:
+          name: ${{ env.version }}
+          body_path: UPDATE.md
+          tag_name: ${{ env.version }}
+          append_body: false
+          token: ${{ secrets.GITHUB_TOKEN }}
+          files: |
+            ./build/**/*.deb
+            ./build/**/*.rpm
+            ./build/**/*.exe
+            ./build/**/*.dmg
+            ./build/**/*.tar.gz
+            ./build/**/*.delta
+            ./build/**/update-*.json
+            ./build/**/install.sh
+            ./build/**/install.ps1
+            ./build/**/SHA256SUMS

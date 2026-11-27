@@ -1,0 +1,26 @@
+{
+  "name": "rename-studio",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "go tool mygo dev",
+    "build": "go tool mygo build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "desktop:dev": "go tool mygo dev",
+    "desktop:build": "go tool mygo build",
+    "desktop:package": "go tool mygo build -platform linux/amd64,windows/amd64,darwin/arm64",
+    "dev:web": "vite",
+    "build:web": "vite build"
+  },
+  "dependencies": {
+    "@lucide/vue": "^1.48.0",
+    "vue": "^3.5.43",
+    "vuetify": "^3.13.5"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^5.2.4",
+    "vite": "^6.4.3",
+    "vitest": "^2.1.9"
+  }
+}

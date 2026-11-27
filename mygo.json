@@ -1,0 +1,17 @@
+{
+  "name": "Rename Studio",
+  "slug": "rename-studio",
+  "identifier": "io.github.renamestudio.mygo",
+  "version": "0.1.0",
+  "icon": "resources/icon.png",
+  "devUrl": "http://127.0.0.1:5173",
+  "devCommand": "pnpm --config.verify-deps-before-run=false run dev:web",
+  "buildCommand": "pnpm --config.verify-deps-before-run=false run build:web",
+  "frontendDist": "dist",
+  "bindings": ".mygo/bindings.ts",
+  "out": "build",
+  "updates": {
+    "publicKey": "8zoTsfKo37YDTK3GR0wu3GKfnMw6aoPYfuOArfbEVxQ=",
+    "github": "wushuo894/rename-studio"
+  }
+}
