@@ -55,6 +55,7 @@ jobs:
           tag_name: ${{ env.version }}
           append_body: false
           token: ${{ secrets.GITHUB_TOKEN }}
+          # Linux 和 macOS 使用同一份 install.sh，发布时只取 Linux 产物中的副本。
           files: |
             ./build/**/*.deb
             ./build/**/*.rpm
@@ -62,6 +63,6 @@ jobs:
             ./build/**/*-setup-*.exe
             ./build/**/*.tar.gz
             ./build/**/update-*.json
-            ./build/**/install.sh
+            ./build/linux-amd64/install.sh
             ./build/**/install.ps1
             ./build/**/SHA256SUMS
