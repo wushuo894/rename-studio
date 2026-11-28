@@ -35,11 +35,6 @@ export function listenForImportedFiles(handler, onError) {
   }
 }
 
-/** 使用系统确认框，让用户复核即将修改的文件数量。 */
-export function confirmRename(count) {
-  return window.mygo.call('Desktop.ConfirmRename', count)
-}
-
 /** 通过原生对话框显示结果或错误。 */
 export function showMessage(message, kind = 'info') {
   return window.mygo.call('Desktop.ShowMessage', message, kind)

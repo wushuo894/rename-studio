@@ -95,9 +95,16 @@ button:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
 .insert-sequence-settings .v-field { min-height: 36px; }
 
 .script-panel { display: grid; gap: 12px; padding-block: 5px; }
-.script-dialog { display: grid; gap: 16px; padding: 24px; max-height: calc(100vh - 48px); overflow: auto; border: 1px solid var(--line-strong); border-radius: 16px; background: var(--surface); color: var(--ink); box-shadow: 0 24px 80px #0006; }
-.script-dialog h2 { font-size: 18px; font-weight: 650; letter-spacing: -.3px; }
-.script-dialog-actions { display: flex; justify-content: flex-end; gap: 8px; padding-top: 2px; }
+.app-dialog { display: grid; gap: 16px; padding: 24px; max-height: calc(100vh - 48px); overflow: auto; border: 1px solid var(--line-strong); border-radius: 16px; background: var(--surface); color: var(--ink); box-shadow: 0 24px 80px #0006; }
+.app-dialog h2 { font-size: 18px; font-weight: 650; letter-spacing: -.3px; }
+.app-dialog-actions { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 8px; padding-top: 2px; }
+.app-dialog-actions .v-btn { font-size: 12px; }
+.rename-overwrite-warning {
+  display: flex; align-items: flex-start; gap: 8px; margin-top: 12px; padding: 10px 12px;
+  border: 1px solid #f4bd6233; border-radius: 8px; background: #f4bd6214; color: #f4bd62;
+  font-size: 13px; line-height: 1.5;
+}
+.rename-overwrite-warning svg { flex: none; }
 .preset-toolbar { flex-wrap: wrap; }
 .preset-toolbar > .v-input { flex: 1 1 180px; }
 .script-toolbar { flex-wrap: wrap; color: var(--muted); font-size: 12px; line-height: 1.6; }
@@ -238,8 +245,7 @@ tbody tr.file-selected:hover { background: #85b7ff12; }
 .preset-menu-empty, .preset-unsaved { padding: 12px; color: var(--muted); font-size: 12px; }
 .preset-unsaved { flex: 1; }
 .script-secondary-actions { display: flex; align-items: center; gap: 2px; margin-right: auto; }
-.script-dialog-actions { align-items: center; flex-wrap: wrap; }
-.script-dialog-actions .v-btn, .preset-toolbar > .v-btn { font-size: 12px; }
+.preset-toolbar > .v-btn { font-size: 12px; }
 .log-count { padding: 0 5px; margin-left: 4px; border-radius: 4px; color: var(--accent); background: #85b7ff15; font-size: 10px; }
 
 /* 测试只接收虚拟文件名；日志是可选择复制的文本，不渲染脚本输出的 HTML。 */
@@ -265,5 +271,5 @@ tbody tr.file-selected:hover { background: #85b7ff12; }
 .script-log-note { padding: 7px 12px; border-top: 1px solid var(--line); }
 
 /* Vuetify 会把弹窗里的 form 设为 flex；这里明确恢复网格，防止选择框被拉高。 */
-.v-dialog .v-overlay__content > .script-dialog { display: grid; }
-.script-dialog > .preset-picker { flex: none; height: 46px; }
+.v-dialog .v-overlay__content > .app-dialog { display: grid; }
+.app-dialog > .preset-picker { flex: none; height: 46px; }

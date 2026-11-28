@@ -150,7 +150,7 @@ async function removePreset() {
     <p v-if="error" class="script-status has-error" role="alert">{{ error }}</p>
 
     <v-dialog v-model="editorOpen" :max-width="800" :persistent="presetBusy" aria-labelledby="script-editor-title">
-      <form class="script-dialog" @submit.prevent="submitPreset">
+      <form class="app-dialog" @submit.prevent="submitPreset">
         <h2 id="script-editor-title">编辑脚本</h2>
         <ScriptPresetPicker :presets="presets" :model-value="editingId" :draft-name="draftName" :disabled="presetBusy" :clearable="false"
           @select="loadDraft" @create="openName('create')" @edit="editPreset" @rename="openName('rename', $event)" @remove="askRemove"/>
@@ -160,7 +160,7 @@ async function removePreset() {
         <ScriptEditor v-model="draftScript" :disabled="presetBusy"/>
         <ScriptTestPanel v-if="editorTestOpen && editorOpen" :script="draftScript"/>
         <p v-if="saveError" class="script-status has-error" role="alert">{{ saveError }}</p>
-        <div class="script-dialog-actions">
+        <div class="app-dialog-actions">
           <div class="script-secondary-actions">
             <v-btn variant="text" :aria-expanded="editorTestOpen" @click="editorTestOpen = !editorTestOpen"><FlaskConical :size="16"/>测试</v-btn>
             <v-btn variant="text" @click="logsOpen = true"><ScrollText :size="16"/>日志 <span v-if="scriptLogs.length" class="log-count">{{ scriptLogs.length }}</span></v-btn>
@@ -172,37 +172,37 @@ async function removePreset() {
     </v-dialog>
 
     <v-dialog v-model="nameOpen" :max-width="400" :persistent="presetBusy" aria-labelledby="script-name-title">
-      <form class="script-dialog" @submit.prevent="submitName">
+      <form class="app-dialog" @submit.prevent="submitName">
         <h2 id="script-name-title">{{ nameMode === 'create' ? '新增脚本' : '重命名脚本' }}</h2>
         <v-text-field v-model="inputName" label="脚本名称" maxlength="40" autofocus :disabled="presetBusy"/>
         <p v-if="nameError" class="script-status has-error" role="alert">{{ nameError }}</p>
-        <div class="script-dialog-actions"><v-btn variant="text" :disabled="presetBusy" @click="nameOpen = false">取消</v-btn><v-btn type="submit" color="primary" :loading="presetBusy">{{ nameMode === 'create' ? '创建并编辑' : '下一步' }}</v-btn></div>
+        <div class="app-dialog-actions"><v-btn variant="text" :disabled="presetBusy" @click="nameOpen = false">取消</v-btn><v-btn type="submit" color="primary" :loading="presetBusy">{{ nameMode === 'create' ? '创建并编辑' : '下一步' }}</v-btn></div>
       </form>
     </v-dialog>
 
     <v-dialog v-model="renameConfirmOpen" :max-width="420" :persistent="presetBusy" aria-labelledby="script-rename-confirm-title">
-      <section class="script-dialog">
+      <section class="app-dialog">
         <h2 id="script-rename-confirm-title">确认重命名</h2>
         <p>确定将“{{ renameRequest?.oldName }}”重命名为“{{ renameRequest?.name }}”？</p>
-        <div class="script-dialog-actions"><v-btn variant="text" :disabled="presetBusy" @click="renameConfirmOpen = false">返回修改</v-btn><v-btn color="primary" :loading="presetBusy" @click="confirmRename">确认重命名</v-btn></div>
+        <div class="app-dialog-actions"><v-btn variant="text" :disabled="presetBusy" @click="renameConfirmOpen = false">返回修改</v-btn><v-btn color="primary" :loading="presetBusy" @click="confirmRename">确认重命名</v-btn></div>
       </section>
     </v-dialog>
 
     <v-dialog v-model="removeOpen" :max-width="400" :persistent="presetBusy" aria-labelledby="script-remove-title">
-      <section class="script-dialog">
+      <section class="app-dialog">
         <h2 id="script-remove-title">删除脚本</h2><p>确定删除“{{ removeName }}”？</p>
         <p v-if="removeError" class="script-status has-error" role="alert">{{ removeError }}</p>
-        <div class="script-dialog-actions"><v-btn variant="text" :disabled="presetBusy" @click="removeOpen = false">取消</v-btn><v-btn color="error" :loading="presetBusy" @click="removePreset">删除</v-btn></div>
+        <div class="app-dialog-actions"><v-btn variant="text" :disabled="presetBusy" @click="removeOpen = false">取消</v-btn><v-btn color="error" :loading="presetBusy" @click="removePreset">删除</v-btn></div>
       </section>
     </v-dialog>
 
     <v-dialog v-model="testOpen" :max-width="800" aria-labelledby="script-test-title">
-      <section class="script-dialog"><h2 id="script-test-title">测试脚本</h2><ScriptTestPanel v-if="testOpen" :script="selectedScript"/><ScriptLogViewer/>
-        <div class="script-dialog-actions"><v-btn variant="text" @click="testOpen = false">关闭</v-btn></div>
+      <section class="app-dialog"><h2 id="script-test-title">测试脚本</h2><ScriptTestPanel v-if="testOpen" :script="selectedScript"/><ScriptLogViewer/>
+        <div class="app-dialog-actions"><v-btn variant="text" @click="testOpen = false">关闭</v-btn></div>
       </section>
     </v-dialog>
     <v-dialog v-model="logsOpen" :max-width="800" aria-labelledby="script-logs-title">
-      <section class="script-dialog"><h2 id="script-logs-title">脚本日志</h2><ScriptLogViewer/><div class="script-dialog-actions"><v-btn variant="text" @click="logsOpen = false">关闭</v-btn></div></section>
+      <section class="app-dialog"><h2 id="script-logs-title">脚本日志</h2><ScriptLogViewer/><div class="app-dialog-actions"><v-btn variant="text" @click="logsOpen = false">关闭</v-btn></div></section>
     </v-dialog>
   </section>
 </template>

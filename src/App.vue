@@ -1,5 +1,5 @@
 <script setup>
-import {computed, onBeforeUnmount, onMounted, reactive, ref, watch} from 'vue'
+import {computed, onBeforeUnmount, onMounted, reactive, ref, watch, watchEffect} from 'vue'
 import {
   ArrowDownAZ,
   ArrowRight,
@@ -13,6 +13,7 @@ import {
   Search,
   TextCursorInput,
   Trash2,
+  TriangleAlert,
   Undo2,
   Upload,
 } from '@lucide/vue'
@@ -22,7 +23,6 @@ import AutoNumberPanel from './components/AutoNumberPanel.vue'
 import CustomScriptPanel from './components/CustomScriptPanel.vue'
 import {
   checkDesktopUpdate,
-  confirmRename,
   desktopPlatform,
   executeRenamePlan,
   importFiles,
@@ -82,7 +82,11 @@ const LEGACY_MOOZZI2_SCRIPT = MOOZZI2_SCRIPT.replace(String.raw`/ - (\d+)/`, Str
 
 const activeMode = ref('findReplace')
 const files = ref([])
-const busy = ref(false)
+const fileOperationBusy = ref(false)
+const pendingRename = ref(null)
+const renameConfirmationCount = ref(0)
+const renameCancelButton = ref(null)
+const busy = computed(() => fileOperationBusy.value || pendingRename.value !== null)
 const previewing = ref(false)
 const imageInfoCache = new Map()
 const sortMode = ref('nameAsc')
@@ -261,13 +265,13 @@ function addFiles(importedFiles) {
 async function openImport() {
   if (!desktop) return notify('文件选择功能需要在桌面应用中使用', 'warning')
   if (busy.value) return
-  busy.value = true
+  fileOperationBusy.value = true
   try {
     addFiles(await importFiles())
   } catch (error) {
     notify(`读取文件失败：${error.message}`, 'error')
   } finally {
-    busy.value = false
+    fileOperationBusy.value = false
   }
 }
 
@@ -392,13 +396,30 @@ function toggleAll(value) {
   files.value = files.value.map((file) => ({...file, selected: value}))
 }
 
-/** 执行已通过预览校验的文件，并在成功后更新源路径和撤销记录。 */
+/** 弹窗打开时固定改名批次，取消时丢弃该批次。 */
+function setRenameConfirmation(open) {
+  if (!open) {
+    pendingRename.value = null
+    return
+  }
+  if (!desktop || !canRename.value) return
+  pendingRename.value = executableFiles.value.map(({id, newName}) => ({id, newName}))
+  // 关闭时立即清除待确认批次，显示数量保留到淡出结束。
+  renameConfirmationCount.value = pendingRename.value.length
+}
+
+// 按钮渲染后把焦点交给取消，避免按回车直接执行覆盖。
+watchEffect(() => {
+  if (pendingRename.value) renameCancelButton.value?.$el.focus({preventScroll: true})
+}, {flush: 'post'})
+
+/** 提交刚刚确认的批次，Go 在写盘前复核文件状态。 */
 async function runRename() {
-  if (!canRename.value || !desktop) return
-  const items = executableFiles.value
-  busy.value = true
+  const items = pendingRename.value
+  if (!items) return
+  fileOperationBusy.value = true
+  pendingRename.value = null
   try {
-    if (!await confirmRename(items.length)) return
     const batch = await executeRenamePlan(items)
     const changes = batch.changes || []
     const removed = new Set(batch.removedIds || [])
@@ -423,14 +444,14 @@ async function runRename() {
   } catch (error) {
     await showMessage(`重命名失败：${error.message}`, 'error')
   } finally {
-    busy.value = false
+    fileOperationBusy.value = false
   }
 }
 
 /** 撤销当前会话最近一次成功的批量重命名。 */
 async function undoLastRename() {
   if (!lastPlan.value || busy.value) return
-  busy.value = true
+  fileOperationBusy.value = true
   try {
     await undoRenamePlan()
     const restored = new Map(lastPlan.value.map((entry) => [entry.target, entry.source]))
@@ -445,7 +466,7 @@ async function undoLastRename() {
   } catch (error) {
     await showMessage(`撤销失败：${error.message}`, 'error')
   } finally {
-    busy.value = false
+    fileOperationBusy.value = false
   }
 }
 
@@ -625,10 +646,31 @@ onBeforeUnmount(() => removeDropListener?.())
               <span class="operation-count">{{ executableFiles.length }}</span>
               <div><strong>个文件待执行</strong><span>{{ previewing ? '正在生成预览…' : hasErrors ? '请先处理无效的文件名或规则' : '执行前会确认改名与覆盖操作' }}</span></div>
             </div>
-            <v-btn color="primary" variant="flat" :loading="busy" :disabled="!canRename" @click="runRename">
-              <Play :size="16" fill="currentColor"/>
-              执行重命名<ArrowRight :size="16"/>
-            </v-btn>
+            <!-- 确认期间触发按钮处于禁用状态，淡入淡出无需依赖按钮位置。 -->
+            <v-dialog :model-value="pendingRename !== null" :max-width="420" transition="fade-transition"
+                      aria-labelledby="rename-confirm-title" aria-describedby="rename-confirm-message"
+                      @update:model-value="setRenameConfirmation">
+              <template #activator="{ props: activatorProps }">
+                <v-btn v-bind="activatorProps" color="primary" variant="flat" :loading="fileOperationBusy" :disabled="!canRename">
+                  <Play :size="16" fill="currentColor"/>
+                  执行重命名<ArrowRight :size="16"/>
+                </v-btn>
+              </template>
+              <section class="app-dialog">
+                <h2 id="rename-confirm-title">确认重命名</h2>
+                <div id="rename-confirm-message">
+                  <p>即将重命名 {{ renameConfirmationCount }} 个文件。</p>
+                  <p class="rename-overwrite-warning">
+                    <TriangleAlert :size="18" aria-hidden="true"/>
+                    同名文件会被覆盖。发生覆盖后，本批次无法撤销。
+                  </p>
+                </div>
+                <div class="app-dialog-actions">
+                  <v-btn ref="renameCancelButton" variant="text" @click="setRenameConfirmation(false)">取消</v-btn>
+                  <v-btn color="primary" variant="flat" @click="runRename">重命名</v-btn>
+                </div>
+              </section>
+            </v-dialog>
           </footer>
         </section>
       </section>

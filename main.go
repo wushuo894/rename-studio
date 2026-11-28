@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"os"
 	"runtime"
@@ -27,16 +26,6 @@ func (d *Desktop) Import(ctx context.Context) ([]fileItem, error) {
 		return nil, err
 	}
 	return d.session.importPaths(paths, false)
-}
-
-// ConfirmRename 显示原生确认框，按回车或 Esc 时默认取消。
-func (d *Desktop) ConfirmRename(ctx context.Context, count int) (bool, error) {
-	answer, err := mygo.Dialog.Message(mygo.MessageOptions{
-		Parent: mygo.CallerWindow(ctx), Title: "确认重命名", Type: mygo.MessageWarning,
-		Message: fmt.Sprintf("即将重命名 %d 个文件。同名文件会被覆盖，覆盖无法撤销。是否继续？", count),
-		Buttons: []string{"重命名", "取消"}, DefaultButton: 1, CancelButton: 1,
-	})
-	return err == nil && answer.Button == 0, err
 }
 
 // ShowMessage 通过调用者的窗口展示原生消息框。
